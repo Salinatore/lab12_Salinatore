@@ -8,30 +8,50 @@ import java.util.List;
 
 public class GUI extends JFrame {
     
-    private final List<JButton> cells = new ArrayList<>();
+    private final Map<Pair<Integer, Integer>, JButton> buttons = new HashMap<>();
+    private final Logics logic;
     
     public GUI(int width) {
+        this.logic = new LogicsImpl(width);
         this.setDefaultCloseOperation(EXIT_ON_CLOSE);
         this.setSize(70*width, 70*width);
         
+        JPanel externalPanel = new JPanel(new BorderLayout());
+
         JPanel panel = new JPanel(new GridLayout(width,width));
-        this.getContentPane().add(panel);
-        
-        ActionListener al = e -> {
-            var jb = (JButton)e.getSource();
-        	jb.setText(String.valueOf(cells.indexOf(jb)));
-        };
                 
         for (int i=0; i<width; i++){
             for (int j=0; j<width; j++){
-            	var pos = new Pair<>(j,i);
-                final JButton jb = new JButton(pos.toString());
-                this.cells.add(jb);
-                jb.addActionListener(al);
+                final JButton jb = new JButton("");
+                this.buttons.put(new Pair<>(i,j), jb);
                 panel.add(jb);
             }
         }
+        
+        ActionListener al = e -> {
+            this.logic.doIteration();
+            this.updateView();
+            if (this.logic.isFinished()) {
+                System.exit(0);
+            }
+        };
+
+        JButton iterates = new JButton(">");
+        iterates.addActionListener(al);
+        
+        externalPanel.add(panel, BorderLayout.CENTER);
+        externalPanel.add(iterates, BorderLayout.SOUTH);
+
+        this.getContentPane().add(externalPanel);
+
+        this.updateView();
         this.setVisible(true);
     }
-    
+
+    private void updateView() {
+        Set<Pair<Integer, Integer>> currentActive = this.logic.activePointsSet();
+        for (var pair : currentActive) {
+            buttons.get(pair).setText("*");
+        }
+    }
 }
